@@ -12,18 +12,17 @@ class TempDirectoryManager
     {
         $user = Auth::user();
 
-        $folderName = Str::slug($user->name). "-{$user->id}";
+        $folderName = Str::slug($user->name) . "-{$user->id}";
 
         $basePath = storage_path('app/temp');
 
         if ($prefix) {
             $basePath .= '/' . Str::slug($prefix);
         }
-
         return "{$basePath}/{$folderName}";
     }
 
-    public static function ensureUserTempExists( ?string $prefix = null): string
+    public static function ensureUserTempExists(?string $prefix = null): string
     {
         $path = self::userTempPath($prefix);
 

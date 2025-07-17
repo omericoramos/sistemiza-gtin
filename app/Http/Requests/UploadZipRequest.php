@@ -14,7 +14,7 @@ class UploadZipRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:zip', 'max:10240'], // 10MB de limite, ajuste conforme necessário
+            'file' => ['required', 'file', 'mimes:zip', 'max:55000'], // 10MB de limite, ajuste conforme necessário
         ];
     }
 
