@@ -2,6 +2,8 @@
 
 namespace App\Actions;
 
+use App\Support\GetIcmsCstFromNfe;
+use App\Support\GetPisCstFromNfe;
 use App\Support\TempDirectoryManager;
 use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
@@ -10,14 +12,16 @@ use Illuminate\Support\Str;
 class ProcessNFeDataAction
 {
     public function __construct(
-        protected ReadValidNFeFileAction $readValidNFeFile,
+        private ReadValidNFeFileAction $readValidNFeFile,
+        private GetIcmsCstFromNfe $getIcmsCstFromNfe,
+        private GetPisCstFromNfe $getPisCstFromNfe,
         protected string $errorResponse = '',
         protected string $companyName = ''
     ) {}
 
     public function execute(array $files): ?array
     {
-        $gtinBatches = [];
+        $detailsProductBatches = [];
         $currentFile = null;
 
         try {
@@ -33,17 +37,15 @@ class ProcessNFeDataAction
                         $this->companyName = Str::slug($xmlData->NFe->infNFe->dest->xNome, '_');
                     }
 
-                    $gtinCode =  $this->processFile($xmlData);
+                    $detailsProduct =  $this->processFile($xmlData);
 
-                    if ($gtinCode) {
-                        $gtinBatches[] = $gtinCode;
+                    if ($detailsProduct) {
+                        $detailsProductBatches[] = $detailsProduct;
                     }
                 }
             }
-
-            $allGtinCodes = array_merge(...$gtinBatches);
-            $codes = collect($allGtinCodes)->unique()->values()->all();
-
+            $allGtinCodes = array_merge(...$detailsProductBatches);
+            $codes = collect($allGtinCodes)->unique('gtin_code')->values()->all();
             return ['gtinCodes' => $codes, 'companyName' => $this->companyName];
         } catch (\Throwable $th) {
             $this->errorResponse = $currentFile ? "Erro ao processar o arquivo: {$currentFile}" : 'Erro ao processar os arquivos';
@@ -56,31 +58,45 @@ class ProcessNFeDataAction
 
     private function processFile(SimpleXMLElement $xmlData): array
     {
-        $gtinCodes = [];
+        $gtinCodesDetailsProduct = [];
 
         $productList = $xmlData->NFe->infNFe->det;
+
         foreach ($productList as $productInfo) {
 
-            $gtinCode = $this->getGtinCode($productInfo);
+            $detailsProduct = $this->getDetailsFromProduct($productInfo);
 
-            if ($gtinCode) {
-                $gtinCodes[] = $gtinCode;
+            if ($detailsProduct) {
+                $gtinCodesDetailsProduct[] = $detailsProduct;
             }
         }
-        return $gtinCodes;
+        return $gtinCodesDetailsProduct;
     }
 
-    private function getGtinCode($productInfo): ?string
+    private function getDetailsFromProduct(SimpleXMLElement $productInfo): ?array
     {
         $gtinCode = (string) ($productInfo->prod->cEAN ?? $productInfo->prod->cEANTrib ?? null);
 
         if ($gtinCode) {
+
             $gtinCodeDigits = preg_replace('/\D/', '', $gtinCode);
+            $cstIcms = $this->getIcmsCstFromNfe->getIcmsCstFromProduct($productInfo);
+            $pisCofinsCst = $this->getPisCstFromNfe->getPisCstFromProduct($productInfo);
+
             if (
                 in_array(strlen($gtinCodeDigits), [8, 12, 13, 14]) &&
                 !in_array($gtinCodeDigits, ['00000000', '0000000000000', '00000000000000'])
             ) {
-                return $gtinCodeDigits;
+                return [
+                    'gtin_code' => $gtinCodeDigits,
+                    'ncm' => (string) ($productInfo->prod->NCM ?? ''),
+                    'description' => (string) ($productInfo->prod->xProd ?? ''),
+                    'cfop' => (string) ($productInfo->prod->CFOP ?? ''),
+                    'cst_icms' => $cstIcms,
+                    'cst_pis' => $pisCofinsCst,
+                    'cst_cofins' => $pisCofinsCst,
+                    'cest' => (string) ($productInfo->prod->CEST ?? ''),
+                ];
             }
         }
         return null;
