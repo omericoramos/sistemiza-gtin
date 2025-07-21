@@ -13,6 +13,7 @@ class ExtractGtinCodeNfeController extends Controller
     ) {}
     public function __invoke()
     {
-        $this->extractCodeGtin->execute();
+        $extractedCodes = $this->extractCodeGtin->execute();
+        return $extractedCodes;
     }
 }

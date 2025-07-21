@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Auth;
 class ExtractCodeGtinAction
 {
     public function __construct(
-        protected ProcessNFeDataAction $processNFeDataAction,
+        private ProcessNFeDataAction $processNFeDataAction,
+        private GenerateExcelfileAction $generateExcelfile
     ) {}
 
     public function execute()
@@ -23,7 +24,11 @@ class ExtractCodeGtinAction
                 )
             );
 
-            return $this->processNFeDataAction->execute($files);
+            $gtinCodesData = $this->processNFeDataAction->execute($files);
+
+            if ($gtinCodesData) {
+                return $this->generateExcelfile->execute($gtinCodesData);
+            }
         }
         return CustomMessages::error('Nenhuma NFe encontrada');
     }
