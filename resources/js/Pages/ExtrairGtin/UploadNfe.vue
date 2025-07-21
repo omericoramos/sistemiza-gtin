@@ -92,6 +92,7 @@ const success = (response) => {
     form.file = null
     modalinfo.title = `<p class='text-emerald-700'>${response.message}</p>`
     modalinfo.showEffect = false
+    modalinfo.effectStatus = 'prepareData'
     showBtnSuccess.value = true
     token.value = response.token
 }
