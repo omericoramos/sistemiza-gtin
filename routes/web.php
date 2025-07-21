@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ExtrairGtin\DownloadExcelFileGtinController;
 use App\Http\Controllers\ExtrairGtin\ExtractGtinCodeNfeController;
 use App\Http\Controllers\ExtrairGtin\UploadNfeController;
 use App\Http\Controllers\ProfileController;
@@ -41,6 +42,8 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/extrair-codigo-gtin', ExtractGtinCodeNfeController::class)
             ->name('processNfeGtinCode.process');
+
+        Route::get('/download/{token}', DownloadExcelFileGtinController::class)->name('extractGtin.download');
     });
 });
 

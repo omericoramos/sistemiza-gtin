@@ -1,5 +1,5 @@
 <script setup>
-import { useForm, Head, router } from '@inertiajs/vue3'
+import { useForm, Head } from '@inertiajs/vue3'
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
 import ModalTaxExclusion from '@/Components/ModalTaxExclusion.vue'
 import { reactive, ref } from 'vue'
@@ -10,18 +10,18 @@ const form = useForm({
     file: null,
     remember: false,
 })
-
+const token = ref(null)
 const modalCustom = ref(null)
 
 const showBtnSuccess = ref(false)
 const showBtnError = ref(false)
 
-// const handleModalFechar = () => {
+const handleModalFechar = () => {
 
-//     if (companyId.value) {
-//         router.visit(route('fileTaxAnalysis.dashboard', companyId.value))
-//     }
-// }
+    if (token.value) {
+        window.location.href = route('extractGtin.download', token.value);
+    }
+}
 
 const modalinfo = reactive({
     title: 'Preparando os arquivos',
@@ -93,6 +93,7 @@ const success = (response) => {
     modalinfo.title = `<p class='text-emerald-700'>${response.message}</p>`
     modalinfo.showEffect = false
     showBtnSuccess.value = true
+    token.value = response.token
 }
 
 const mountMessageError = (message) => {
