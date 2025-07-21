@@ -6,11 +6,12 @@ namespace App\Actions;
 
 use App\Support\CustomMessages;
 use Illuminate\Support\Facades\Cache;
-use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Illuminate\Support\Str;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 
 class ExportGtinCodesToExcelAction
 {
@@ -34,17 +35,30 @@ class ExportGtinCodesToExcelAction
     private function generateStructure(array $gtinCodes, Worksheet $sheet): void
     {
         $sheet->setCellValue('A1', 'Código GTIN');
+        $sheet->setCellValue('B1', 'NCM');
+        $sheet->setCellValue('C1', 'CFOP');
+        $sheet->setCellValue('D1', 'CEST');
+        $sheet->setCellValue('E1', 'Descrição');
+        $sheet->setCellValue('F1', 'CST ICMS');
+        $sheet->setCellValue('G1', 'CST PIS');
+        $sheet->setCellValue('H1', 'CST COFINS');
 
         $row = 2;
 
         foreach ($gtinCodes as $gtinCode) {
 
-            $sheet->setCellValueExplicit(
-                'A' . $row,
-                $gtinCode,
-                DataType::TYPE_STRING
-            );
+            $sheet->getStyle("A{$row}:H{$row}")
+                ->getNumberFormat()
+                ->setFormatCode(NumberFormat::FORMAT_TEXT);
 
+            $sheet->setCellValueExplicit('A' . $row, $gtinCode['gtin_code'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('B' . $row, $gtinCode['ncm'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('C' . $row, $gtinCode['cfop'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('D' . $row, $gtinCode['cest'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('E' . $row, $gtinCode['description'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('F' . $row, $gtinCode['cst_icms'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('G' . $row, $gtinCode['cst_pis'], DataType::TYPE_STRING);
+            $sheet->setCellValueExplicit('H' . $row, $gtinCode['cst_cofins'], DataType::TYPE_STRING);
             $row++;
         }
     }

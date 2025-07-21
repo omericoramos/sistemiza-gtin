@@ -14,11 +14,10 @@ class GenerateExcelfileAction
     ) {}
     public function execute(array $gtinCodesData)
     {
-        $gtinCodes = $this->storeGtinCodes->execute($gtinCodesData['gtinCodes']);
+        $gtinData = $this->storeGtinCodes->execute($gtinCodesData['gtinCodes']);
 
-        if ($gtinCodes) {
-            $codesOnly = collect($gtinCodes)->pluck('gtin_code')->toArray();
-            return $this->exportGtinCodes->execute($codesOnly, $gtinCodesData['companyName']);
+        if ($gtinData) {
+            return $this->exportGtinCodes->execute($gtinData, $gtinCodesData['companyName']);
         }
 
         return CustomMessages::error('Nenhum código GTIN encontrado');
