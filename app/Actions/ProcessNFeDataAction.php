@@ -5,12 +5,14 @@ namespace App\Actions;
 use App\Support\TempDirectoryManager;
 use Illuminate\Support\Facades\Log;
 use SimpleXMLElement;
+use Illuminate\Support\Str;
 
 class ProcessNFeDataAction
 {
     public function __construct(
         protected ReadValidNFeFileAction $readValidNFeFile,
         protected string $errorResponse = '',
+        protected string $companyName = ''
     ) {}
 
     public function execute(array $files): ?array
@@ -24,7 +26,12 @@ class ProcessNFeDataAction
 
                 $xmlData = $this->readValidNFeFile->execute($file);
                 $currentFile = $file;
+
                 if (isset($xmlData->NFe->infNFe->det)) {
+
+                    if (!$this->companyName) {
+                        $this->companyName = Str::slug($xmlData->NFe->infNFe->dest->xNome, '_');
+                    }
 
                     $gtinCode =  $this->processFile($xmlData);
 
@@ -37,7 +44,7 @@ class ProcessNFeDataAction
             $allGtinCodes = array_merge(...$gtinBatches);
             $codes = collect($allGtinCodes)->unique()->values()->all();
 
-            return $codes;
+            return ['gtinCodes' => $codes, 'companyName' => $this->companyName];
         } catch (\Throwable $th) {
             $this->errorResponse = $currentFile ? "Erro ao processar o arquivo: {$currentFile}" : 'Erro ao processar os arquivos';
             Log::error($this->errorResponse . $th->getMessage(), ['exception' => $th]);
